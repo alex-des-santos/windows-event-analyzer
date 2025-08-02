@@ -2,7 +2,9 @@
 
 Uma ferramenta web moderna e intuitiva para análise de logs do Event Viewer do Windows, com insights inteligentes gerados por IA.
 
-🌐 **[Acesse a ferramenta online](https://seuusuario.github.io/windows-event-analyzer/)**
+🌐 **[Acesse a ferramenta online](https://alex-des-santos.github.io/windows-event-analyzer/)**
+
+📂 **[Repositório GitHub](https://github.com/alex-des-santos/windows-event-analyzer)**
 
 ## ✨ Funcionalidades
 
@@ -27,7 +29,7 @@ Uma ferramenta web moderna e intuitiva para análise de logs do Event Viewer do 
    - Clique com botão direito > "Save All Events As..."
    - Escolha formato CSV
 
-2. **Acesse a ferramenta**: [windows-event-analyzer](https://seuusuario.github.io/windows-event-analyzer/)
+2. **Acesse a ferramenta**: [Windows Event Log Analyzer](https://alex-des-santos.github.io/windows-event-analyzer/)
 
 3. **Configure a API**: 
    - Obtenha uma API key gratuita no [Google AI Studio](https://makersuite.google.com/app/apikey)
@@ -96,7 +98,7 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para de
 
 ## 🆘 Suporte
 
-Encontrou um bug ou tem uma sugestão? [Abra uma issue](https://github.com/seuusuario/windows-event-analyzer/issues)
+Encontrou um bug ou tem uma sugestão? [Abra uma issue](https://github.com/alex-des-santos/windows-event-analyzer/issues)
 
 ---
 
