@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analisador de Logs do Event Viewer - Windows 11</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+            padding: 30px;
+            border-radius: 15px;
+            background: #f8f9fa;
+            border-left: 5px solid #3498db;
+        }
+
+        .section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            font-weight: 400;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        input[type="text"], input[type="password"], input[type="file"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus, input[type="password"]:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .file-upload {
+            border: 3px dashed #3498db;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .file-upload:hover {
+            background: #e3f2fd;
+            border-color: #2980b9;
+        }
+
+        .file-upload.dragover {
+            background: #e3f2fd;
+            border-color: #2980b9;
+            transform: scale(1.02);
+        }
+
+        .file-upload-icon {
+            font-size: 3em;
+            color: #3498db;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #ecf0f1;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2980b9);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .results {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            border-top: 4px solid #3498db;
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            color: #7f8c8d;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .error-card {
+            border-top-color: #e74c3c;
+        }
+
+        .warning-card {
+            border-top-color: #f39c12;
+        }
+
+        .info-card {
+            border-top-color: #27ae60;
+        }
+
+        .insights-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+
+        .insights-section h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .insight-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 4px solid #3498db;
+        }
+
+        .insight-title {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .insight-description {
+            color: #5a6c7d;
+            line-height: 1.6;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #fcc;
+            margin: 20px 0;
+        }
+
+        .success-message {
+            background: #efe;
+            color: #363;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #cfc;
+            margin: 20px 0;
+        }
+
+        .file-list {
+            margin-top: 20px;
+        }
+
+        .file-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .file-icon {
+            margin-right: 10px;
+            color: #3498db;
+        }
+
+        .remove-file {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+
+            .main-content {
+                padding: 20px;
+            }
+
+            .section {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Windows Event Log Analyzer</h1>
+             <p>Ferramenta inteligente para análise de logs do Windows com IA</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Configuração da API -->
+            <div class="section">
+                <h2>⚙️ Configuração da API</h2>
+                <div class="form-group">
+                    <label for="apiKey">Chave da API do Google AI Studio/Gemini:</label>
+                    <input type="password" id="apiKey" placeholder="Cole sua chave da API aqui..." />
+                    <small style="color: #7f8c8d; margin-top: 5px; display: block;">
+                        Obtenha sua chave gratuita em: <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a>
+                    </small>
+                </div>
+            </div>
+
+            <!-- Upload de Arquivos -->
+            <div class="section">
+                <h2>📁 Upload de Arquivos CSV</h2>
+                <div class="file-upload" id="fileUpload">
+                    <div class="file-upload-icon">📄</div>
+                    <h3>Arraste e solte seus arquivos CSV aqui</h3>
+                    <p>ou clique para selecionar arquivos</p>
+                    <input type="file" id="fileInput" multiple accept=".csv" style="display: none;">
+                </div>
+                <div class="file-list" id="fileList"></div>
+            </div>
+
+            <!-- Botão de Análise -->
+            <div class="section">
+                <button class="btn" id="analyzeBtn" disabled>🚀 Analisar Logs</button>
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+
+            <!-- Resultados -->
+            <div class="results" id="results">
+                <div class="section">
+                    <h2>📊 Estatísticas dos Logs</h2>
+                    <div class="stats-grid" id="statsGrid"></div>
+                </div>
+
+                <div class="insights-section">
+                    <h3>🤖 Insights e Recomendações da IA</h3>
+                    <div id="aiInsights"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class EventLogAnalyzer {
+            constructor() {
+                this.files = [];
+                this.logData = [];
+                this.apiKey = '';
+                this.initializeEventListeners();
+            }
+
+            initializeEventListeners() {
+                const fileUpload = document.getElementById('fileUpload');
+                const fileInput = document.getElementById('fileInput');
+                const apiKeyInput = document.getElementById('apiKey');
+                const analyzeBtn = document.getElementById('analyzeBtn');
+
+                // File upload events
+                fileUpload.addEventListener('click', () => fileInput.click());
+                fileUpload.addEventListener('dragover', this.handleDragOver.bind(this));
+                fileUpload.addEventListener('dragleave', this.handleDragLeave.bind(this));
+                fileUpload.addEventListener('drop', this.handleDrop.bind(this));
+                fileInput.addEventListener('change', this.handleFileSelect.bind(this));
+
+                // API key input
+                apiKeyInput.addEventListener('input', this.handleApiKeyChange.bind(this));
+
+                // Analyze button
+                analyzeBtn.addEventListener('click', this.analyzeFiles.bind(this));
+            }
+
+            handleDragOver(e) {
+                e.preventDefault();
+                document.getElementById('fileUpload').classList.add('dragover');
+            }
+
+            handleDragLeave(e) {
+                e.preventDefault();
+                document.getElementById('fileUpload').classList.remove('dragover');
+            }
+
+            handleDrop(e) {
+                e.preventDefault();
+                document.getElementById('fileUpload').classList.remove('dragover');
+                const files = Array.from(e.dataTransfer.files).filter(file => file.name.endsWith('.csv'));
+                this.addFiles(files);
+            }
+
+            handleFileSelect(e) {
+                const files = Array.from(e.target.files);
+                this.addFiles(files);
+            }
+
+            handleApiKeyChange(e) {
+                this.apiKey = e.target.value.trim();
+                this.updateAnalyzeButton();
+            }
+
+            addFiles(files) {
+                files.forEach(file => {
+                    if (!this.files.find(f => f.name === file.name)) {
+                        this.files.push(file);
+                    }
+                });
+                this.updateFileList();
+                this.updateAnalyzeButton();
+            }
+
+            removeFile(fileName) {
+                this.files = this.files.filter(f => f.name !== fileName);
+                this.updateFileList();
+                this.updateAnalyzeButton();
+            }
+
+            updateFileList() {
+                const fileList = document.getElementById('fileList');
+                if (this.files.length === 0) {
+                    fileList.innerHTML = '';
+                    return;
+                }
+
+                fileList.innerHTML = this.files.map(file => `
+                    <div class="file-item">
+                        <div class="file-info">
+                            <span class="file-icon">📄</span>
+                            <span>${file.name} (${this.formatFileSize(file.size)})</span>
+                        </div>
+                        <button class="remove-file" onclick="analyzer.removeFile('${file.name}')">Remover</button>
+                    </div>
+                `).join('');
+            }
+
+            updateAnalyzeButton() {
+                const analyzeBtn = document.getElementById('analyzeBtn');
+                analyzeBtn.disabled = this.files.length === 0 || !this.apiKey;
+            }
+
+            formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            async analyzeFiles() {
+                if (this.files.length === 0) {
+                    this.showError('Por favor, selecione pelo menos um arquivo CSV.');
+                    return;
+                }
+
+                if (!this.apiKey || this.apiKey.trim().length < 30) {
+                    this.showError('Por favor, insira uma API key válida do Google AI Studio (deve ter pelo menos 30 caracteres).');
+                    return;
+                }
+
+                if (!this.apiKey.startsWith('AIza')) {
+                    this.showError('API key inválida. As chaves do Google AI Studio começam com "AIza".');
+                    return;
+                }
+
+                // Teste rápido da API antes de processar arquivos
+                try {
+                    await this.testAPI();
+                } catch (error) {
+                    this.showError(`Erro na API: ${error.message}`);
+                    return;
+                }
+
+                try {
+                    this.showProgress();
+                    this.logData = [];
+
+                    // Read and parse CSV files
+                    for (let i = 0; i < this.files.length; i++) {
+                        this.updateProgress((i / this.files.length) * 50);
+                        const content = await this.readFile(this.files[i]);
+                        const parsed = this.parseCSV(content, this.files[i].name);
+                        this.logData.push(...parsed);
+                    }
+
+                    this.updateProgress(60);
+
+                    // Generate statistics
+                    const stats = this.generateStatistics();
+                    this.displayStatistics(stats);
+
+                    this.updateProgress(80);
+
+                    // Get AI insights
+                    const insights = await this.getAIInsights(stats);
+                    this.displayInsights(insights);
+
+                    this.updateProgress(100);
+                    this.hideProgress();
+                    this.showResults();
+
+                } catch (error) {
+                    this.hideProgress();
+                    this.showError('Erro durante a análise: ' + error.message);
+                }
+            }
+
+            readFile(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = e => resolve(e.target.result);
+                    reader.onerror = reject;
+                    reader.readAsText(file, 'utf-8');
+                });
+            }
+
+            parseCSV(content, fileName) {
+                const lines = content.split('\n').filter(line => line.trim());
+                const headers = lines[0].split(',').map(h => h.trim());
+                const data = [];
+
+                for (let i = 1; i < lines.length; i++) {
+                    const values = this.parseCSVLine(lines[i]);
+                    if (values.length >= headers.length) {
+                        const entry = {
+                            source: fileName,
+                            level: values[0] || '',
+                            dateTime: values[1] || '',
+                            source_name: values[2] || '',
+                            eventId: values[3] || '',
+                            category: values[4] || '',
+                            description: values.slice(5).join(',') || ''
+                        };
+                        data.push(entry);
+                    }
+                }
+
+                return data;
+            }
+
+            parseCSVLine(line) {
+                const result = [];
+                let current = '';
+                let inQuotes = false;
+
+                for (let i = 0; i < line.length; i++) {
+                    const char = line[i];
+                    
+                    if (char === '"') {
+                        inQuotes = !inQuotes;
+                    } else if (char === ',' && !inQuotes) {
+                        result.push(current.trim());
+                        current = '';
+                    } else {
+                        current += char;
+                    }
+                }
+                
+                result.push(current.trim());
+                return result;
+            }
+
+            generateStatistics() {
+                const stats = {
+                    total: this.logData.length,
+                    errors: 0,
+                    warnings: 0,
+                    information: 0,
+                    sources: {},
+                    eventIds: {},
+                    timeRange: { start: null, end: null },
+                    topErrors: [],
+                    topSources: []
+                };
+
+                this.logData.forEach(entry => {
+                    // Count by level
+                    const level = entry.level.toLowerCase();
+                    if (level.includes('erro')) stats.errors++;
+                    else if (level.includes('aviso')) stats.warnings++;
+                    else stats.information++;
+
+                    // Count by source
+                    stats.sources[entry.source_name] = (stats.sources[entry.source_name] || 0) + 1;
+
+                    // Count by event ID
+                    stats.eventIds[entry.eventId] = (stats.eventIds[entry.eventId] || 0) + 1;
+
+                    // Track time range
+                    if (entry.dateTime) {
+                        const date = new Date(entry.dateTime.replace(/(\d{2})\/(\d{2})\/(\d{4})/, '$3-$2-$1'));
+                        if (!stats.timeRange.start || date < stats.timeRange.start) {
+                            stats.timeRange.start = date;
+                        }
+                        if (!stats.timeRange.end || date > stats.timeRange.end) {
+                            stats.timeRange.end = date;
+                        }
+                    }
+                });
+
+                // Get top sources
+                stats.topSources = Object.entries(stats.sources)
+                    .sort(([,a], [,b]) => b - a)
+                    .slice(0, 10);
+
+                // Get top errors
+                const errorEntries = this.logData.filter(entry => 
+                    entry.level.toLowerCase().includes('erro')
+                );
+                const errorGroups = {};
+                errorEntries.forEach(entry => {
+                    const key = `${entry.source_name}-${entry.eventId}`;
+                    if (!errorGroups[key]) {
+                        errorGroups[key] = {
+                            source: entry.source_name,
+                            eventId: entry.eventId,
+                            count: 0,
+                            description: entry.description.substring(0, 200)
+                        };
+                    }
+                    errorGroups[key].count++;
+                });
+
+                stats.topErrors = Object.values(errorGroups)
+                    .sort((a, b) => b.count - a.count)
+                    .slice(0, 10);
+
+                return stats;
+            }
+
+            displayStatistics(stats) {
+                const statsGrid = document.getElementById('statsGrid');
+                statsGrid.innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-number">${stats.total.toLocaleString()}</div>
+                        <div class="stat-label">Total de Eventos</div>
+                    </div>
+                    <div class="stat-card error-card">
+                        <div class="stat-number">${stats.errors.toLocaleString()}</div>
+                        <div class="stat-label">Erros</div>
+                    </div>
+                    <div class="stat-card warning-card">
+                        <div class="stat-number">${stats.warnings.toLocaleString()}</div>
+                        <div class="stat-label">Avisos</div>
+                    </div>
+                    <div class="stat-card info-card">
+                        <div class="stat-number">${stats.information.toLocaleString()}</div>
+                        <div class="stat-label">Informações</div>
+                    </div>
+                `;
+            }
+
+            async testAPI() {
+                // Validação mais rigorosa da API key
+                if (!this.apiKey || this.apiKey.length < 35) {
+                    throw new Error('API key muito curta. Verifique se copiou a chave completa.');
+                }
+                
+                if (!this.apiKey.startsWith('AIza')) {
+                    throw new Error('API key inválida. Deve começar com "AIza".');
+                }
+                
+                const testPrompt = "Hello";
+                
+                // Tenta primeiro com gemini-pro (mais estável)
+                const models = ['gemini-pro', 'gemini-1.5-flash-latest'];
+                
+                for (const model of models) {
+                    try {
+                        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.apiKey}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                contents: [{
+                                    parts: [{
+                                        text: testPrompt
+                                    }]
+                                }],
+                                generationConfig: {
+                                    maxOutputTokens: 10,
+                                    temperature: 0.1
+                                }
+                            })
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+                                return; // API funcionando
+                            }
+                        }
+                        
+                        // Tratamento específico de erros
+                        const errorData = await response.json().catch(() => ({}));
+                        
+                        if (response.status === 400) {
+                            if (errorData.error && errorData.error.message) {
+                                if (errorData.error.message.includes('API key')) {
+                                    throw new Error('API key inválida ou expirada. Verifique sua chave no Google AI Studio.');
+                                }
+                                throw new Error(`Erro na requisição: ${errorData.error.message}`);
+                            }
+                            throw new Error('API key inválida ou formato de requisição incorreto.');
+                        }
+                        
+                        if (response.status === 403) {
+                            throw new Error('API key sem permissão. Verifique se o Gemini API está habilitado no Google AI Studio.');
+                        }
+                        
+                        if (response.status === 404) {
+                            continue; // Tenta próximo modelo
+                        }
+                        
+                        if (response.status === 429) {
+                            throw new Error('Muitas requisições. Aguarde alguns minutos.');
+                        }
+                        
+                        throw new Error(`Erro ${response.status}: ${errorData.error?.message || 'Erro desconhecido'}`);
+                        
+                    } catch (error) {
+                        if (error.message.includes('Failed to fetch')) {
+                            throw new Error('Erro de conexão. Verifique sua internet.');
+                        }
+                        
+                        if (model === models[models.length - 1]) {
+                            throw error;
+                        }
+                    }
+                }
+                
+                throw new Error('Nenhum modelo disponível. Verifique sua API key.');
+            }
+
+            async getAIInsights(stats) {
+                const prompt = this.buildAnalysisPrompt(stats);
+                
+                // Lista de modelos para tentar em ordem de preferência
+                const models = [
+                    'gemini-1.5-flash-latest',
+                    'gemini-1.5-pro-latest',
+                    'gemini-pro'
+                ];
+                
+                for (const model of models) {
+                    try {
+                        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.apiKey}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                contents: [{
+                                    parts: [{
+                                        text: prompt
+                                    }]
+                                }]
+                            })
+                        });
+
+                        if (!response.ok) {
+                            // Se não for o último modelo, tenta o próximo
+                            if (model !== models[models.length - 1]) {
+                                continue;
+                            }
+                            
+                            const errorData = await response.json().catch(() => ({}));
+                            let errorMessage = `Erro na API: ${response.status}`;
+                            
+                            if (response.status === 400) {
+                                errorMessage = 'API Key inválida ou malformada. Verifique se a chave está correta.';
+                            } else if (response.status === 403) {
+                                errorMessage = 'API Key sem permissão ou cota excedida. Verifique sua conta Google AI Studio.';
+                            } else if (response.status === 404) {
+                                errorMessage = 'Modelo não encontrado. Tentando modelo alternativo...';
+                                continue;
+                            } else if (response.status === 429) {
+                                errorMessage = 'Muitas requisições. Aguarde alguns minutos e tente novamente.';
+                            }
+                            
+                            throw new Error(errorMessage);
+                        }
+
+                        const data = await response.json();
+                        
+                        if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+                            if (model !== models[models.length - 1]) {
+                                continue;
+                            }
+                            throw new Error('Resposta da API inválida. Tente novamente.');
+                        }
+                        
+                        return data.candidates[0].content.parts[0].text;
+                        
+                    } catch (error) {
+                        // Se não for o último modelo, tenta o próximo
+                        if (model !== models[models.length - 1]) {
+                            continue;
+                        }
+                        
+                        if (error.message.includes('Failed to fetch')) {
+                            throw new Error('Erro de conexão. Verifique sua internet e tente novamente.');
+                        }
+                        throw new Error(`Falha ao obter insights da IA: ${error.message}`);
+                    }
+                }
+                
+                throw new Error('Todos os modelos falharam. Verifique sua API key e tente novamente.');
+            }
+
+            buildAnalysisPrompt(stats) {
+                const topErrorsText = stats.topErrors.map(error => 
+                    `- ${error.source} (ID: ${error.eventId}): ${error.count} ocorrências - ${error.description}`
+                ).join('\n');
+
+                const topSourcesText = stats.topSources.map(([source, count]) => 
+                    `- ${source}: ${count} eventos`
+                ).join('\n');
+
+                return `
+Analise os seguintes dados de logs do Event Viewer do Windows 11 e forneça insights detalhados sobre possíveis problemas e suas correções:
+
+ESTATÍSTICAS GERAIS:
+- Total de eventos: ${stats.total}
+- Erros: ${stats.errors}
+- Avisos: ${stats.warnings}
+- Informações: ${stats.information}
+
+PRINCIPAIS ERROS:
+${topErrorsText}
+
+PRINCIPAIS FONTES DE EVENTOS:
+${topSourcesText}
+
+Por favor, forneça uma análise estruturada em formato JSON com os seguintes campos:
+{
+  "resumo_geral": "Resumo da situação geral do sistema",
+  "problemas_criticos": [
+    {
+      "titulo": "Nome do problema",
+      "descricao": "Descrição detalhada",
+      "impacto": "Impacto no sistema",
+      "solucao": "Passos para correção"
+    }
+  ],
+  "recomendacoes_preventivas": [
+    {
+      "titulo": "Nome da recomendação",
+      "descricao": "Descrição da ação preventiva",
+      "prioridade": "Alta/Média/Baixa"
+    }
+  ],
+  "status_sistema": "Saudável/Atenção/Crítico"
+}
+
+Foque em problemas reais do Windows 11 e forneça soluções práticas e específicas.
+`;
+            }
+
+            displayInsights(insights) {
+                const aiInsights = document.getElementById('aiInsights');
+                
+                try {
+                    // Try to parse as JSON first
+                    let parsedInsights;
+                    try {
+                        // Extract JSON from the response if it's wrapped in markdown
+                        const jsonMatch = insights.match(/```json\n([\s\S]*?)\n```/) || insights.match(/\{[\s\S]*\}/);
+                        const jsonText = jsonMatch ? (jsonMatch[1] || jsonMatch[0]) : insights;
+                        parsedInsights = JSON.parse(jsonText);
+                    } catch (e) {
+                        // If JSON parsing fails, create a simple structure
+                        parsedInsights = {
+                            resumo_geral: insights,
+                            problemas_criticos: [],
+                            recomendacoes_preventivas: [],
+                            status_sistema: "Análise disponível"
+                        };
+                    }
+
+                    let html = `
+                        <div class="insight-item">
+                            <div class="insight-title">📋 Resumo Geral</div>
+                            <div class="insight-description">${parsedInsights.resumo_geral || 'Análise em andamento...'}</div>
+                        </div>
+                    `;
+
+                    if (parsedInsights.problemas_criticos && parsedInsights.problemas_criticos.length > 0) {
+                        html += `
+                            <div class="insight-item">
+                                <div class="insight-title">🚨 Problemas Críticos</div>
+                                <div class="insight-description">
+                                    ${parsedInsights.problemas_criticos.map(problema => `
+                                        <div style="margin-bottom: 15px; padding: 15px; background: #fff3cd; border-radius: 8px;">
+                                            <strong>${problema.titulo}</strong><br>
+                                            <em>Descrição:</em> ${problema.descricao}<br>
+                                            <em>Impacto:</em> ${problema.impacto}<br>
+                                            <em>Solução:</em> ${problema.solucao}
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    if (parsedInsights.recomendacoes_preventivas && parsedInsights.recomendacoes_preventivas.length > 0) {
+                        html += `
+                            <div class="insight-item">
+                                <div class="insight-title">💡 Recomendações Preventivas</div>
+                                <div class="insight-description">
+                                    ${parsedInsights.recomendacoes_preventivas.map(rec => `
+                                        <div style="margin-bottom: 10px; padding: 10px; background: #d1ecf1; border-radius: 8px;">
+                                            <strong>${rec.titulo}</strong> (Prioridade: ${rec.prioridade})<br>
+                                            ${rec.descricao}
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    if (parsedInsights.status_sistema) {
+                        const statusColor = parsedInsights.status_sistema.toLowerCase().includes('crítico') ? '#e74c3c' :
+                                          parsedInsights.status_sistema.toLowerCase().includes('atenção') ? '#f39c12' : '#27ae60';
+                        
+                        html += `
+                            <div class="insight-item" style="border-left-color: ${statusColor};">
+                                <div class="insight-title">🎯 Status do Sistema</div>
+                                <div class="insight-description" style="color: ${statusColor}; font-weight: bold;">
+                                    ${parsedInsights.status_sistema}
+                                </div>
+                            </div>
+                        `;
+                    }
+
+                    aiInsights.innerHTML = html;
+
+                } catch (error) {
+                    // Fallback: display raw insights
+                    aiInsights.innerHTML = `
+                        <div class="insight-item">
+                            <div class="insight-title">🤖 Análise da IA</div>
+                            <div class="insight-description">${insights.replace(/\n/g, '<br>')}</div>
+                        </div>
+                    `;
+                }
+            }
+
+            showProgress() {
+                document.getElementById('progressBar').style.display = 'block';
+                document.getElementById('analyzeBtn').disabled = true;
+            }
+
+            updateProgress(percent) {
+                document.getElementById('progressFill').style.width = percent + '%';
+            }
+
+            hideProgress() {
+                document.getElementById('progressBar').style.display = 'none';
+                document.getElementById('analyzeBtn').disabled = false;
+            }
+
+            showResults() {
+                document.getElementById('results').style.display = 'block';
+                document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+            }
+
+            showError(message) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error-message';
+                errorDiv.textContent = message;
+                document.querySelector('.main-content').appendChild(errorDiv);
+                
+                setTimeout(() => {
+                    errorDiv.remove();
+                }, 5000);
+            }
+        }
+
+        // Initialize the analyzer
+        const analyzer = new EventLogAnalyzer();
+    </script>
+</body>
+</html>
